@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = DownloaderViewModel()
+    @State private var showInstallHelp = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -102,9 +103,72 @@ struct ContentView: View {
 
             // Bottom Bar
             HStack {
-                Text("⚠️ Requer **uv** e **ffmpeg**.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
+                Button(action: {
+                    showInstallHelp.toggle()
+                }) {
+                    Label("Dependências Necessárias", systemImage: "info.circle")
+                }
+                .buttonStyle(.borderless)
+                .foregroundColor(.secondary)
+                .popover(isPresented: $showInstallHelp, arrowEdge: .bottom) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Requisitos do Sistema")
+                            .font(.headline)
+
+                        Text("Para que os downloads e conversões funcionem corretamente, abra o seu Terminal e instale as seguintes ferramentas:")
+                            .font(.callout)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("1. Instalar o ffmpeg (via Homebrew):")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            HStack {
+                                Text("brew install ffmpeg")
+                                    .font(.system(.caption, design: .monospaced))
+                                    .textSelection(.enabled)
+                                Spacer()
+                                Button(action: {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString("brew install ffmpeg", forType: .string)
+                                }) {
+                                    Image(systemName: "doc.on.doc")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundColor(.blue)
+                            }
+                            .padding(6)
+                            .background(Color(NSColor.textBackgroundColor))
+                            .cornerRadius(4)
+                        }
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("2. Instalar o uv (Gerenciador Python):")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            HStack {
+                                Text("curl -LsSf https://astral.sh/uv/install.sh | sh")
+                                    .font(.system(.caption, design: .monospaced))
+                                    .textSelection(.enabled)
+                                Spacer()
+                                Button(action: {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString("curl -LsSf https://astral.sh/uv/install.sh | sh", forType: .string)
+                                }) {
+                                    Image(systemName: "doc.on.doc")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundColor(.blue)
+                            }
+                            .padding(6)
+                            .background(Color(NSColor.textBackgroundColor))
+                            .cornerRadius(4)
+                        }
+                    }
+                    .padding(20)
+                    .frame(width: 400)
+                }
 
                 Spacer()
 
