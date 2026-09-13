@@ -63,6 +63,32 @@ class DownloaderViewModel: ObservableObject {
     @Published var statusText: String = ""
     @Published var hasError: Bool = false
 
+    var isCropValid: Bool {
+        let hasCrop = !startTime.isEmpty || !endTime.isEmpty
+        guard hasCrop else { return true }
+
+        // Se só tem inicio e fim vazio, é até o final (válido)
+        if endTime.isEmpty { return true }
+
+        let startStr = startTime.isEmpty ? "00:00:00" : startTime
+        let startSecs = timeToSeconds(startStr)
+        let endSecs = timeToSeconds(endTime)
+
+        return startSecs < endSecs
+    }
+
+    private func timeToSeconds(_ time: String) -> Int {
+        let parts = time.components(separatedBy: ":")
+        guard parts.count == 3,
+              let h = Int(parts[0]),
+              let m = Int(parts[1]),
+              let s = Int(parts[2])
+        else {
+            return 0
+        }
+        return (h * 3600) + (m * 60) + s
+    }
+
     private var process: Process?
 
     init() {
@@ -74,6 +100,12 @@ class DownloaderViewModel: ObservableObject {
     func startDownload() {
         guard !url.isEmpty else {
             statusText = "Por favor, insira uma URL válida."
+            hasError = true
+            return
+        }
+
+        guard isCropValid else {
+            statusText = "O tempo 'Até' deve ser maior que o tempo 'De'."
             hasError = true
             return
         }

@@ -190,7 +190,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(viewModel.isDownloading || viewModel.url.isEmpty)
+                .disabled(viewModel.isDownloading || viewModel.url.isEmpty || !viewModel.isCropValid)
             }
         }
         .padding(32)
