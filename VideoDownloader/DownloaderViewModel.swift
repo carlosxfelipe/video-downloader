@@ -31,6 +31,18 @@ enum DownloadFormat: String, CaseIterable, Identifiable {
             return ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", "192K"]
         }
     }
+
+    /// Com recorte ativo, tenta a resolução escolhida e, se o stream não existir,
+    /// cai para o melhor disponível (evita "Requested format is not available").
+    var cropFormatSelector: String {
+        switch self {
+        case .mp4_4k: return "bestvideo[res<=2160]+bestaudio/bestvideo+bestaudio/best"
+        case .mp4_1080p: return "bestvideo[res<=1080]+bestaudio/bestvideo+bestaudio/best"
+        case .mp4_720p: return "bestvideo[res<=720]+bestaudio/bestvideo+bestaudio/best"
+        case .mp4_wallpaper: return "bestvideo[vcodec^=avc1]+bestaudio/bestvideo+bestaudio/best"
+        case .audio_mp3: return "bestaudio/best"
+        }
+    }
 }
 
 extension String {
@@ -43,6 +55,8 @@ class DownloaderViewModel: ObservableObject {
     @Published var url: String = ""
     @Published var selectedFormat: DownloadFormat = .mp4_1080p
     @Published var savePath: String = ""
+    @Published var startTime: String = ""
+    @Published var endTime: String = ""
 
     @Published var isDownloading: Bool = false
     @Published var progress: Double = 0.0
@@ -69,21 +83,65 @@ class DownloaderViewModel: ObservableObject {
         progress = 0.0
         statusText = "Iniciando download..."
 
+        // Captura na main thread antes de entrar no background
+        let capturedURL = url
+        let capturedFormat = selectedFormat
+        let capturedSavePath = savePath
+        let capturedStart = startTime
+        let capturedEnd = endTime
+
         DispatchQueue.global(qos: .userInitiated).async {
-            self.runYtDlp()
+            self.runYtDlp(
+                url: capturedURL,
+                format: capturedFormat,
+                savePath: capturedSavePath,
+                startTime: capturedStart,
+                endTime: capturedEnd
+            )
         }
     }
 
-    private func runYtDlp() {
+    private func runYtDlp(
+        url: String,
+        format: DownloadFormat,
+        savePath: String,
+        startTime: String,
+        endTime: String
+    ) {
         let process = Process()
         self.process = process
-
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
 
         var args = ["uvx", "yt-dlp", "--newline", "--no-check-certificate"]
-        args.append(contentsOf: selectedFormat.ytdlpArgs)
+        args.append(contentsOf: format.ytdlpArgs)
 
-        let outTemplate = "\(savePath)/%(title)s.%(ext)s"
+        if !startTime.isEmpty || !endTime.isEmpty {
+            let start = startTime.isEmpty ? "00:00:00" : startTime
+            let end = endTime.isEmpty ? "inf" : endTime
+            args.append("--download-sections")
+            args.append("*\(start)-\(end)")
+            // Substitui o seletor de formato pelo cropFormatSelector que tem fallback robusto
+            if let fIdx = args.firstIndex(of: "-f") {
+                args[fIdx + 1] = format.cropFormatSelector
+            }
+            if format != .audio_mp3, !args.contains("--merge-output-format") {
+                args.append("--merge-output-format")
+                args.append("mp4")
+            }
+        }
+
+        // Nomes distintos para recorte e download completo — evita sobrescrever um com o outro.
+        // Parênteses são seguros em templates yt-dlp; colchetes [] são reservados para expressões condicionais.
+        let hasCrop = !startTime.isEmpty || !endTime.isEmpty
+        let outTemplate: String
+        if hasCrop {
+            let s = (startTime.isEmpty ? "00:00:00" : startTime).replacingOccurrences(of: ":", with: "-")
+            let e = (endTime.isEmpty ? "end" : endTime).replacingOccurrences(of: ":", with: "-")
+            outTemplate = "\(savePath)/%(title)s (\(s) to \(e)).%(ext)s"
+        } else {
+            outTemplate = "\(savePath)/%(title)s.%(ext)s"
+        }
+        args.append("--force-overwrites")
         args.append("-o")
         args.append(outTemplate)
         args.append(url)
@@ -95,11 +153,13 @@ class DownloaderViewModel: ObservableObject {
         process.standardOutput = pipe
         process.standardError = pipe
 
+        var collectedOutput = ""
         let fileHandle = pipe.fileHandleForReading
         fileHandle.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             if data.isEmpty { return }
             if let str = String(data: data, encoding: .utf8) {
+                collectedOutput += str
                 self?.parseOutput(str)
             }
         }
@@ -115,7 +175,12 @@ class DownloaderViewModel: ObservableObject {
                     self.statusText = "Download concluído com sucesso!"
                 } else {
                     self.hasError = true
-                    self.statusText = "Erro durante o download."
+                    let lastLines = collectedOutput
+                        .components(separatedBy: .newlines)
+                        .filter { !$0.isEmpty }
+                        .suffix(3)
+                        .joined(separator: " | ")
+                    self.statusText = lastLines.isEmpty ? "Erro durante o download." : lastLines
                 }
             }
         } catch {

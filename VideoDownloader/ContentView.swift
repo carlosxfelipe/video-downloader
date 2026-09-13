@@ -53,6 +53,19 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
+                    // Recorte Temporal
+                    HStack(alignment: .top) {
+                        Text("Recorte:")
+                            .frame(width: 100, alignment: .trailing)
+                            .padding(.top, 4)
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            TimePickerField(label: "De", time: $viewModel.startTime)
+                            TimePickerField(label: "Até", time: $viewModel.endTime)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     // Salvar em
                     HStack {
                         Text("Salvar em:")
@@ -181,7 +194,7 @@ struct ContentView: View {
             }
         }
         .padding(32)
-        .frame(minWidth: 550, idealWidth: 550, minHeight: 450, idealHeight: 450)
+        .frame(minWidth: 550, idealWidth: 550, minHeight: 530, idealHeight: 530)
     }
 
     private func selectFolder() {
