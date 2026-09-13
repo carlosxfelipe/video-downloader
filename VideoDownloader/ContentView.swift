@@ -19,7 +19,7 @@ struct ContentView: View {
                     .font(.system(size: 40))
                     .foregroundStyle(.blue)
 
-                Text("YouTube Downloader")
+                Text("Video Downloader")
                     .font(.title2)
                     .fontWeight(.semibold)
 
