@@ -30,3 +30,7 @@ Como o aplicativo executa os motores de download nativamente via terminal em bac
 - **SwiftUI**: Para a construção de toda a interface, seguindo as métricas e os padrões modernos de design da Apple (HIG).
 - **Process (Foundation)**: Para a integração profunda com o shell (`/bin/zsh`), permitindo rodar e monitorar a saída do `yt-dlp` em tempo real sem travar a interface gráfica.
 - **yt-dlp**: O motor de código aberto mais confiável do mundo para extração de vídeos na web.
+
+## 📄 Licença
+
+Este projeto está licenciado sob a [GNU General Public License v3.0](LICENSE).
