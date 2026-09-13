@@ -78,10 +78,11 @@ struct AboutView: View {
 private struct PixDonationView: View {
     private let pixKey = "e3921fb5-d50e-4bda-93d2-43bb3d998b7b"
     @State private var copied = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 10) {
-            Text("Gostou do app? ☕️")
+            Text("Gostou do app? \(Image(systemName: "cup.and.saucer.fill"))")
                 .font(.footnote)
                 .fontWeight(.semibold)
 
@@ -96,14 +97,14 @@ private struct PixDonationView: View {
                 city: "Brasil"
             )
 
-            if let qrImage = generateQRCode(from: payload) {
+            if let qrImage = generateQRCode(from: payload, isDarkMode: colorScheme == .dark) {
                 Image(nsImage: qrImage)
                     .interpolation(.none)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 140, height: 140)
                     .padding(6)
-                    .background(.white)
+                    .background(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
 
@@ -171,16 +172,25 @@ private struct PixDonationView: View {
 
     // MARK: - QR Code
 
-    private func generateQRCode(from string: String) -> NSImage? {
+    private func generateQRCode(from string: String, isDarkMode: Bool) -> NSImage? {
         guard let data = string.data(using: .utf8),
-              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+              let qrFilter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
 
-        filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
+        qrFilter.setValue(data, forKey: "inputMessage")
+        qrFilter.setValue("M", forKey: "inputCorrectionLevel")
 
-        guard let ciImage = filter.outputImage else { return nil }
+        guard let qrImage = qrFilter.outputImage,
+              let colorFilter = CIFilter(name: "CIFalseColor") else { return nil }
 
-        let scaled = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        colorFilter.setValue(qrImage, forKey: "inputImage")
+        // QR Code module (dark part) -> White in dark mode, Black in light mode
+        colorFilter.setValue(isDarkMode ? CIColor.white : CIColor.black, forKey: "inputColor0")
+        // Background (light part) -> Clear
+        colorFilter.setValue(CIColor.clear, forKey: "inputColor1")
+
+        guard let coloredImage = colorFilter.outputImage else { return nil }
+
+        let scaled = coloredImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
         let rep = NSCIImageRep(ciImage: scaled)
         let nsImage = NSImage(size: rep.size)
         nsImage.addRepresentation(rep)

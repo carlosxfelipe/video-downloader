@@ -20,7 +20,7 @@ struct VideoDownloaderApp: App {
         }
 
         // ── About window ─────────────────────────────────────────────────────
-        Window("Sobre o Video Downloader", id: "about") {
+        Window("Sobre", id: "about") {
             AboutView()
         }
         .windowResizability(.contentSize)
