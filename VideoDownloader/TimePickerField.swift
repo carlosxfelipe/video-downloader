@@ -59,7 +59,6 @@ struct TimePickerField: View {
         }
     }
 
-    @ViewBuilder
     private func segment(value: Binding<Int>, max maxVal: Int) -> some View {
         HStack(spacing: 1) {
             TextField("", value: value, formatter: twoDigit)

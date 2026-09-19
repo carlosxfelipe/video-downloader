@@ -10,7 +10,7 @@ import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct AboutView: View {
-    // Read version and build number directly from the app bundle
+    /// Read version and build number directly from the app bundle
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }

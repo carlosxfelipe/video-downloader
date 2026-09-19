@@ -15,7 +15,9 @@ enum DownloadFormat: String, CaseIterable, Identifiable {
     case mp4_wallpaper = "Vídeo MP4 (Live Wallpaper macOS - H.264)"
     case audio_mp3 = "Apenas Áudio (MP3)"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var ytdlpArgs: [String] {
         switch self {
@@ -68,7 +70,9 @@ class DownloaderViewModel: ObservableObject {
         guard hasCrop else { return true }
 
         // Se só tem inicio e fim vazio, é até o final (válido)
-        if endTime.isEmpty { return true }
+        if endTime.isEmpty {
+            return true
+        }
 
         let startStr = startTime.isEmpty ? "00:00:00" : startTime
         let startSecs = timeToSeconds(startStr)
@@ -189,7 +193,9 @@ class DownloaderViewModel: ObservableObject {
         let fileHandle = pipe.fileHandleForReading
         fileHandle.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
-            if data.isEmpty { return }
+            if data.isEmpty {
+                return
+            }
             if let str = String(data: data, encoding: .utf8) {
                 collectedOutput += str
                 self?.parseOutput(str)
