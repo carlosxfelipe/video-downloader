@@ -2,6 +2,8 @@
 
 Um aplicativo nativo para macOS que oferece uma interface limpa, moderna e intuitiva para baixar vídeos e áudios do YouTube (e centenas de outros sites) com máxima qualidade. Funciona como uma interface gráfica amigável para a poderosa ferramenta de linha de comando `yt-dlp`.
 
+![Preview](assets/preview.png)
+
 ## 📥 Instalação
 
 Você pode instalar o Video Downloader facilmente usando o Homebrew:
